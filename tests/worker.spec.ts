@@ -46,31 +46,34 @@ test('Selective Network Mocking using Route Fulfill and Script Patching', async 
   await context.addInitScript(() => {
     // @ts-ignore
     // Register a custom constructor window.BlobProxiedSharedWorker to override SharedWorker instantiation
-    window.BlobProxiedSharedWorker = function(workerUrl: string) {
+    window.BlobProxiedSharedWorker = function (workerUrl: string) {
       // Create a message channel to communicate between the page and the proxied worker
       const channel = new MessageChannel();
-      
-      // Fetch the worker script text over the page's network context
+
+      // Fetch the worker script text over the page's network context.
+      // NOTE: This request is intercepted and patched by Playwright's network router below.
       fetch(workerUrl)
         .then(res => res.text()) // Extract the script content as plain text
         .then(scriptText => {
+          // scriptText now contains the patched script (including the mocked fetch logic injected by Playwright)
+          debugger;
           // Wrap the modified script text into a Blob with javascript content-type
           const blob = new Blob([scriptText], { type: 'application/javascript' });
           // Generate a local object blob URL pointing to this script in memory
           const blobUrl = URL.createObjectURL(blob);
-          
+
           // Instantiate the native SharedWorker using the safe, local blob URL
           const realWorker = new window.SharedWorker(blobUrl);
-          
+
           // Relay incoming worker port messages to the proxy channel's port1
           realWorker.port.onmessage = (e) => channel.port1.postMessage(e.data);
           // Relay incoming proxy channel port1 messages to the worker's port
           channel.port1.onmessage = (e) => realWorker.port.postMessage(e.data);
-          
+
           // Start the port transmission for the real worker
           realWorker.port.start();
         });
-        
+
       // Return the wrapper port object matching the standard SharedWorker structure
       return { port: channel.port2 };
     };
