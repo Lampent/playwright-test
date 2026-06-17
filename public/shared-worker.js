@@ -3,14 +3,27 @@ self.onconnect = (event) => {
   port.start();
 
   port.onmessage = async () => {
-    port.postMessage('DEBUG: Starting fetch inside SharedWorker');
+    port.postMessage('DEBUG: Starting fetches inside SharedWorker');
+    
+    let snapText = 'SNAPSHOT ERROR';
     try {
-      const res = await fetch('http://localhost:3000/api/snapshot');
-      port.postMessage('DEBUG: Fetch completed, status = ' + res.status);
-      const text = await res.text();
-      port.postMessage(text);
-    } catch (err) {
-      port.postMessage('ERROR: ' + err.message);
-    }
+      const snapRes = await fetch('http://localhost:3000/api/snapshot');
+      snapText = await snapRes.text();
+    } catch (e) { snapText = 'ERR: ' + e.message; }
+
+    let statText = 'STATUS ERROR';
+    try {
+      const statRes = await fetch('http://localhost:3000/api/status');
+      statText = await statRes.text();
+    } catch (e) { statText = 'ERR: ' + e.message; }
+
+    let dataText = 'DATA ERROR';
+    try {
+      const dataRes = await fetch('http://localhost:3000/api/data', { method: 'POST', body: 'test' });
+      dataText = await dataRes.text();
+    } catch (e) { dataText = 'ERR: ' + e.message; }
+
+    const combined = [snapText, statText, dataText].join('\n');
+    port.postMessage(combined);
   };
 };

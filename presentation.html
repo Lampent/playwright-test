@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Playwright & SharedWorkers</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+  <!-- Switched to a clean, highly readable Light Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/simple.min.css" id="theme">
+  <!-- Switched to a light syntax highlighting theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/github.min.css" id="highlight-theme">
+  
+  <style>
+    .reveal h1, .reveal h2, .reveal h3 { 
+      text-transform: none; 
+      font-weight: bold; 
+    }
+    .reveal pre { 
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15); 
+      border-radius: 8px; 
+      font-size: 0.6em;
+      border: 1px solid #ddd;
+    }
+    /* Darker, readable colors for white backgrounds */
+    .highlight-red { color: #d32f2f !important; font-weight: bold; }
+    .highlight-green { color: #2e7d32 !important; font-weight: bold; }
+    .highlight-blue { color: #1976d2 !important; font-weight: bold; }
+    .slide-number { font-size: 24px !important; color: #333 !important; }
+    .reveal .progress { height: 6px; }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- Slide 1: Title -->
+      <section>
+        <h1 style="color: #3f51b5; font-size: 2.5em;">Playwright & SharedWorkers</h1>
+        <h3 style="color: #333333;">Defeating the Chromium Sandbox</h3>
+        <p style="margin-top: 50px; color: #666666;">An architectural deep dive into worker network interception</p>
+      </section>
+
+      <!-- Slide 2: The Goal -->
+      <section>
+        <h2>The Goal 🎯</h2>
+        <p>Selectively mock specific network (<code class="highlight-blue">fetch</code>) requests inside a <code class="highlight-blue">SharedWorker</code> during Playwright E2E testing.</p>
+        <div class="fragment" style="margin-top: 40px; padding: 20px; background: rgba(46, 125, 50, 0.05); border-left: 5px solid #2e7d32; border-radius: 8px;">
+          <p>...while allowing all other requests to perfectly hit the real backend server.</p>
+        </div>
+      </section>
+
+      <!-- Slide 3: The Initial Problem -->
+      <section>
+        <h2>The Initial Problem 🚧</h2>
+        <p>Playwright's <code class="highlight-blue">page.route()</code> seamlessly intercepts the Main Thread and Dedicated WebWorkers.</p>
+        <h4 class="fragment highlight-red" style="margin-top: 40px;">But it cannot see network traffic inside SharedWorkers.</h4>
+        <p class="fragment" style="color: #555555; font-size: 0.8em; margin-top: 20px;">
+          Why? Because SharedWorkers run in a global multi-context architecture outside of a single page's direct control.
+        </p>
+      </section>
+
+      <!-- Slide 4: Attempt 1 -->
+      <section>
+        <h2>Attempt 1: Native Script Patching</h2>
+        <p style="font-size: 0.8em;">If we can't intercept the worker's network requests, let's intercept the worker's <strong>source code</strong> download!</p>
+        <pre><code data-trim data-noescape class="language-javascript">
+// Playwright intercepts the script download via CDP
+await context.route('**/shared-worker.js', async (route) => {
+  
+  // Inject a monkey-patch mid-air
+  const patch = `
+    self.fetch = async (url) => {
+      if (url === '/api/snapshot') return MOCK_RESPONSE;
+      return originalFetch(url);
+    };
+  `;
+  
+  // Serve the tampered file to the browser
+  return route.fulfill({ body: patch + originalScript });
+});
+        </code></pre>
+      </section>
+
+      <!-- Slide 5: The Chromium Security Sandbox -->
+      <section>
+        <h2>The Result: <span class="highlight-red">CORS Blocked</span> ❌</h2>
+        <p>The mocked endpoint succeeded perfectly, but all <strong>real</strong> network requests instantly failed.</p>
+        <div style="background: #fff3e0; border: 2px solid #d32f2f; padding: 15px; border-radius: 8px; font-family: monospace; color: #d32f2f; margin-top: 30px;">
+          TypeError: Failed to fetch
+        </div>
+        <p class="fragment" style="margin-top: 40px;"><strong>Why? The Chromium Opaque Origin Sandbox!</strong></p>
+      </section>
+
+      <!-- Slide 6: The Interception -->
+      <section>
+        <h2>The Interception & Sandbox 🕵️</h2>
+        <ul style="font-size: 0.8em; line-height: 1.6;">
+          <li class="fragment"><strong>The DevTools Protocol:</strong> Playwright intercepts and modifies the script "mid-air" using the Chrome DevTools Protocol.</li>
+          <li class="fragment"><strong>What is a Sandbox?</strong> A sandbox is a heavily restricted execution environment inside the browser designed to isolate potentially malicious or untrusted code.</li>
+          <li class="fragment"><strong>The Trigger:</strong> Because the script was artificially modified by DevTools (instead of natively downloading from your local server), Chromium's security engine gets suspicious and permanently traps the worker in this sandbox.</li>
+        </ul>
+      </section>
+
+      <!-- Slide 7: What is an Opaque Origin? -->
+      <section>
+        <h2 style="font-size: 1.8em;">What is an "Opaque Origin"? 🛑</h2>
+        <ul style="font-size: 0.8em; line-height: 1.6;">
+          <li class="fragment"><strong>Normal Origins:</strong> Scripts usually inherit the trusted identity of the web page (e.g., <code class="highlight-blue">http://localhost:8080</code>).</li>
+          <li class="fragment"><strong>Opaque (Null) Origins:</strong> When sandboxed, Chromium strips this identity away, assigning the worker an "Opaque Origin" (literally the string value <code class="highlight-red">null</code>). It is now completely anonymous and untrusted.</li>
+          <li class="fragment"><strong>The Consequence:</strong> When this anonymous worker tries to make a real API request, the browser's <strong>CORS</strong> (Cross-Origin) security blocks it. The backend server requires requests to come from a trusted origin, but the browser refuses to send the request because the origin is <code class="highlight-red">null</code>.</li>
+        </ul>
+      </section>
+
+      <!-- Slide 7: The Final Solution -->
+      <section>
+        <h2>Attempt 2: The Final Solution ✨</h2>
+        <h3 class="highlight-green">Blob Proxy Injection</h3>
+        <p style="margin-top: 40px;">How do we defeat the sandbox with <strong class="highlight-blue">zero changes</strong> to the application code?</p>
+      </section>
+
+      <!-- Slide 8: What is a Blob? -->
+      <section>
+        <h2>What is a Blob? 🧩</h2>
+        <ul style="font-size: 0.8em; line-height: 1.6;">
+          <li class="fragment"><strong>Definition:</strong> Blob stands for <em>Binary Large Object</em>. In JavaScript, it is a way to store raw data (like a string of Javascript code) dynamically in the browser's memory.</li>
+          <li class="fragment"><strong>Blob URLs:</strong> The browser can convert a Blob in memory into a temporary, local URL using <code class="highlight-blue">URL.createObjectURL(blob)</code>. It looks like this: <br><code style="background: #eee; padding: 4px; border-radius: 4px;">blob:http://localhost:8080/xyz-123</code></li>
+          <li class="fragment"><strong>The Superpower:</strong> Because a Blob URL is generated directly by your Main Thread's Javascript, <strong>it permanently inherits the Main Thread's trusted origin</strong> (<code class="highlight-blue">http://localhost:8080</code>).</li>
+        </ul>
+      </section>
+
+      <!-- Slide 9: How Blob Proxy Works -->
+      <section>
+        <h2 style="font-size: 1.8em;">How the Blob Proxy Works 🛠️</h2>
+        <ol style="font-size: 0.8em; line-height: 1.6;">
+          <li class="fragment"><strong>Intercept Instantiation:</strong> Playwright silently overrides the <code class="highlight-blue">new SharedWorker()</code> constructor in the Main Thread.</li>
+          <li class="fragment"><strong>Fetch as Text:</strong> The Main Thread downloads the patched worker script over the network as a raw text string.</li>
+          <li class="fragment"><strong>Wrap in a Blob:</strong> The Main Thread wraps that raw text into a Blob, and generates a trusted <code class="highlight-blue">Blob URL</code>.</li>
+          <li class="fragment"><strong>Execute:</strong> The worker boots from the trusted Blob URL instead of the suspicious network file!</li>
+        </ol>
+      </section>
+
+      <!-- Slide 10: Why Blob Works -->
+      <section>
+        <h2>Why the Blob Succeeds 🏆</h2>
+        <p>Because the Blob URL inherits the Main Thread's exact identity, Chromium <strong>never sandboxes it</strong>.</p>
+        <div class="fragment" style="margin-top: 40px; padding: 30px; background: rgba(46, 125, 50, 0.05); border-radius: 12px; border: 2px solid #2e7d32;">
+          <h3 class="highlight-green" style="margin: 0;">No DevTools tampering flags.</h3>
+          <h3 class="highlight-green" style="margin: 10px 0;">No Opaque (Null) origin.</h3>
+          <h3 class="highlight-green" style="margin: 0;">No CORS errors.</h3>
+        </div>
+      </section>
+
+      <!-- Slide 10: Conclusion -->
+      <section>
+        <h2>Conclusion 🎉</h2>
+        <ul style="font-size: 0.9em; line-height: 1.8;">
+          <li>Targeted requests are perfectly mocked.</li>
+          <li>Real requests safely pass through to the backend.</li>
+          <li>The application architecture remains 100% untouched.</li>
+        </ul>
+        <h3 class="fragment" style="margin-top: 60px; color: #3f51b5;">Experiment Complete.</h3>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      slideNumber: 'c/t',
+      transition: 'zoom',
+      backgroundTransition: 'slide',
+      plugins: [ RevealHighlight ]
+    });
+  </script>
+</body>
+</html>

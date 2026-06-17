@@ -1,0 +1,17 @@
+Why did the real network requests fail in the SharedWorker when intercepted by Playwright?
+
+It failed to fetch the real endpoints (/api/status and /api/data) because of a strict security mechanism built into the Chrome/Chromium browser engine known as the "Opaque Origin Sandbox".
+
+Here is exactly what happened step-by-step:
+
+1. Playwright Intercepts the Script: When the browser tried to download shared-worker.js from http://localhost:8080, Playwright's route.fulfill() stepped in, grabbed the file, added our monkey-patch to the top, and handed it back to the browser.
+2. Chrome Gets Suspicious: Because the SharedWorker script was tampered with and served dynamically by an interceptor (Playwright) rather than directly from the network socket, Chrome's security engine treats the script as if it came from an "opaque origin" (essentially an origin of null). 
+3. CORS Blocks the Real Fetches: Because the worker is now running inside this opaque null sandbox, it is strictly forbidden from making cross-origin requests to another port (like your real server on http://localhost:3000). When the worker's fetch() tries to reach the real server, Chrome immediately kills the request before it even leaves the browser, throwing the generic network error: TypeError: Failed to fetch.
+
+Why didn't this happen to the Main Thread or WebWorker?
+Because we didn't intercept and modify the HTML file or the worker.js script! Their code executed natively on http://localhost:8080, so Chrome trusted them to make cross-origin requests to http://localhost:3000.
+
+The Takeaway:
+Injecting a patch into a SharedWorker script via Playwright works beautifully for fully mocking specific endpoints (as we saw with [MOCKED_BY_INJECTED_SCRIPT] GET /api/snapshot). 
+
+However, because it triggers Chrome's opaque origin sandbox, it will break any *real* network traffic attempting to leave that worker. If you need a SharedWorker to make both mocked *and* real network requests simultaneously, the only 100% reliable workaround is to include a library like Mock Service Worker (MSW) directly inside your worker's source code, rather than trying to patch it externally with Playwright!

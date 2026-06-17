@@ -355,16 +355,32 @@
         <!-- SharedWorker Card -->
         <div class="card" id="card-shared">
           <div class="card-header">
-            <div class="card-title">Shared Worker</div>
+            <div class="card-title">Native Shared Worker</div>
             <span class="badge badge-idle" id="badge-shared"><span class="badge-dot"></span>Idle</span>
           </div>
           <div class="card-desc">
-            Fetches from a Shared Worker. Since Shared Workers run in a shared global context outside a single page, Playwright's standard API fails to intercept them.
+            Fetches from a Shared Worker intercepted via CDP. Due to Chromium security, this runs in an opaque origin and blocks real cross-origin fetches.
           </div>
-          <button class="btn" id="sharedWorkerFetch">SharedWorker fetch</button>
+          <button class="btn" id="sharedWorkerFetch">Native SharedWorker fetch</button>
           <div>
             <div class="inline-result-title">Response</div>
             <div class="inline-result-panel" id="res-shared">Awaiting trigger...</div>
+          </div>
+        </div>
+
+        <!-- Blob Proxy Worker Card -->
+        <div class="card" id="card-blobworker" style="border-left: 4px solid #10b981;">
+          <div class="card-header">
+            <div class="card-title">Blob Proxy SharedWorker</div>
+            <span class="badge badge-idle" id="badge-blobworker"><span class="badge-dot"></span>Idle</span>
+          </div>
+          <div class="card-desc">
+            Bypasses Chrome's Opaque Origin by injecting the patched worker as a Blob URL dynamically, inheriting full trusted origin permissions!
+          </div>
+          <button class="btn" id="blobWorkerFetch" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Blob Proxy fetch</button>
+          <div>
+            <div class="inline-result-title">Response</div>
+            <div class="inline-result-panel" id="res-blobworker">Awaiting trigger...</div>
           </div>
         </div>
       </div>
@@ -420,13 +436,19 @@
       // 1. Main Thread Fetch Click
       document.getElementById('mainFetch').onclick = async () => {
         updateStatus('main', 'Running...', 'badge-running', 'Fetching...');
-        log('Starting main thread fetch to http://localhost:3000/api/snapshot...');
+        log('Starting main thread fetches (snapshot, status, data)...');
         try {
-          const res = await fetch('http://localhost:3000/api/snapshot');
-          const text = await res.text();
-          log('main fetch result: ' + text);
+          const [snapRes, statRes, dataRes] = await Promise.all([
+            fetch('http://localhost:3000/api/snapshot'),
+            fetch('http://localhost:3000/api/status'),
+            fetch('http://localhost:3000/api/data', { method: 'POST', body: 'test' })
+          ]);
+          const text = [await snapRes.text(), await statRes.text(), await dataRes.text()].join('\n');
+          log('main fetch result:\n' + text);
           
-          if (text.includes('MOCKED')) {
+          if (text.includes('MOCKED') && text.includes('REAL_SERVER')) {
+            updateStatus('main', 'Partial Mock', 'badge-mocked', text);
+          } else if (text.includes('MOCKED')) {
             updateStatus('main', 'Intercepted', 'badge-mocked', text);
           } else {
             updateStatus('main', 'Bypassed', 'badge-bypassed', text);
@@ -456,41 +478,58 @@
       };
 
       // 3. Shared Worker Instantiation & Fetch Click
+      let sharedWorker;
       try {
-        const sharedWorker = new SharedWorker('/shared-worker.js');
+        sharedWorker = new SharedWorker('/shared-worker.js');
         sharedWorker.port.start();
 
         sharedWorker.port.onmessage = (e) => {
-          log('shared worker result: ' + e.data);
+          log('shared worker result:\n' + e.data);
           
-          if (e.data.includes('MOCKED')) {
+          if (e.data.includes('MOCKED') && e.data.includes('REAL_SERVER')) {
+            updateStatus('shared', 'Partial Mock', 'badge-mocked', e.data);
+          } else if (e.data.includes('MOCKED')) {
             updateStatus('shared', 'Intercepted', 'badge-mocked', e.data);
-          } else if (e.data.includes('SERVER')) {
-            updateStatus('shared', 'Bypassed', 'badge-bypassed', e.data);
           } else {
-            // Keep appending debugging logs
-            const panel = document.getElementById('res-shared');
-            if (panel.textContent === 'Awaiting trigger...' || panel.textContent === 'SharedWorker fetching...') {
-              panel.textContent = '';
-            }
-            panel.textContent += e.data + '\n';
+            updateStatus('shared', 'Error/Bypassed', 'badge-bypassed', e.data);
           }
         };
-
-        sharedWorker.onerror = (e) => {
-          log('shared worker error: ' + (e.message || 'unknown error'));
-          updateStatus('shared', 'Error', 'badge-bypassed', 'ERROR: ' + (e.message || 'unknown error'));
-        };
-
-        document.getElementById('sharedWorkerFetch').onclick = () => {
-          updateStatus('shared', 'Running...', 'badge-running', 'SharedWorker fetching...');
-          log('Signaling SharedWorker to fetch...');
-          sharedWorker.port.postMessage('fetch');
-        };
-      } catch (e) {
-        log('shared worker instantiation failed: ' + e.message);
-        updateStatus('shared', 'Failed', 'badge-bypassed', 'Instantiation failed: ' + e.message);
+      } catch (err) {
+        log('Failed to create SharedWorker: ' + err.message);
       }
+
+      document.getElementById('sharedWorkerFetch').onclick = () => {
+        updateStatus('shared', 'Running...', 'badge-running', 'Worker fetching...');
+        log('Signaling SharedWorker to fetch...');
+        if (sharedWorker) sharedWorker.port.postMessage('fetch');
+      };
+
+      // 4. Blob Proxy SharedWorker Fetch Click
+      document.getElementById('blobWorkerFetch').onclick = () => {
+        if (!window.BlobProxiedSharedWorker) {
+           log('blob worker result: BlobProxiedSharedWorker not injected by Playwright!');
+           updateStatus('blobworker', 'Missing Injection', 'badge-bypassed', 'Missing Injection');
+           return;
+        }
+        updateStatus('blobworker', 'Running...', 'badge-running', 'Blob Proxy Worker fetching...');
+        log('Signaling Blob Proxy SharedWorker to fetch...');
+        
+        if (!window.blobWorkerInstance) {
+          window.blobWorkerInstance = new window.BlobProxiedSharedWorker('/shared-worker.js');
+          window.blobWorkerInstance.port.start();
+          window.blobWorkerInstance.port.onmessage = (e) => {
+            log('blob worker result:\n' + e.data);
+            if (e.data.includes('MOCKED') && e.data.includes('REAL_SERVER')) {
+              updateStatus('blobworker', 'Partial Mock', 'badge-mocked', e.data);
+            } else if (e.data.includes('MOCKED')) {
+              updateStatus('blobworker', 'Intercepted', 'badge-mocked', e.data);
+            } else {
+              updateStatus('blobworker', 'Error/Bypassed', 'badge-bypassed', e.data);
+            }
+          };
+        }
+        window.blobWorkerInstance.port.postMessage('fetch');
+      };
 
       // Log initialization
       log('Playwright Interception Explorer initialized.');
