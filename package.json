@@ -1,0 +1,13 @@
+{
+  "name": "worker-intercept-test",
+  "version": "1.0.0",
+  "description": "Playwright worker intercept test",
+  "scripts": {
+    "serve": "serve public -l 8080",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "serve": "^14.2.3"
+  }
+}
