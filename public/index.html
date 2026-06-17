@@ -308,6 +308,217 @@
         background-color: rgba(255, 255, 255, 0.08);
         color: #ffffff;
       }
+
+      /* Tab System Styling */
+      .tabs-nav {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 1.5rem auto;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 0.4rem;
+        border-radius: 12px;
+        border: 1px solid var(--card-border);
+        width: fit-content;
+      }
+
+      .tab-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        padding: 0.6rem 1.5rem;
+        font-family: inherit;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: var(--transition);
+      }
+
+      .tab-btn:hover {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .tab-btn.active {
+        color: #ffffff;
+        background: var(--primary);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+      }
+
+      .tab-content {
+        display: none;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      .tab-content.active {
+        display: flex;
+        animation: fadeIn 0.4s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Architecture Scheme Layout */
+      .scheme-container {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 2rem;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 2rem;
+        backdrop-filter: blur(16px);
+      }
+
+      @media (max-width: 900px) {
+        .scheme-container {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .steps-header {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .step-card {
+        display: flex;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 12px;
+        transition: var(--transition);
+        cursor: pointer;
+      }
+
+      .step-card:hover, .step-card.active {
+        background: rgba(99, 102, 241, 0.08);
+        border-color: rgba(99, 102, 241, 0.3);
+        transform: translateX(4px);
+      }
+
+      .step-num {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: var(--primary-light);
+        border: 1px solid var(--primary);
+        color: #a5b4fc;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .step-card:hover .step-num, .step-card.active .step-num {
+        background: var(--primary);
+        color: #ffffff;
+        box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+      }
+
+      .step-content h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #ffffff;
+      }
+
+      .step-content p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      .visual-flow {
+        background: var(--terminal-bg);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* SVG Diagram Styling */
+      .svg-diagram {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .svg-step {
+        cursor: pointer;
+      }
+
+      .svg-step .step-line {
+        transition: var(--transition);
+      }
+
+      .svg-step .step-text {
+        transition: var(--transition);
+      }
+
+      .svg-step .step-dot {
+        transition: var(--transition);
+      }
+
+      /* Active steps styling when hovered or clicked */
+      .svg-step:hover .step-line, .svg-step.active .step-line {
+        stroke: var(--primary);
+        stroke-width: 3px;
+        filter: drop-shadow(0px 0px 4px var(--primary));
+      }
+
+      .svg-step:hover .step-line {
+        marker-end: url(#arrow-highlight);
+      }
+      .svg-step.active .step-line {
+        marker-end: url(#arrow-highlight);
+      }
+
+      .svg-step:hover .step-text, .svg-step.active .step-text {
+        fill: #ffffff;
+        font-weight: 600;
+      }
+
+      .svg-step:hover .step-dot, .svg-step.active .step-dot {
+        fill: #ffffff;
+        r: 6;
+        filter: drop-shadow(0px 0px 8px var(--primary));
+      }
+
+      /* Distinct color for Step 6 (mock success inside worker) */
+      .svg-step[data-step="6"]:hover .step-line, .svg-step[data-step="6"].active .step-line {
+        stroke: var(--success);
+        marker-end: url(#arrow-success);
+        filter: drop-shadow(0px 0px 4px var(--success));
+      }
+      .svg-step[data-step="6"]:hover .step-dot, .svg-step[data-step="6"].active .step-dot {
+        fill: var(--success);
+        filter: drop-shadow(0px 0px 8px var(--success));
+      }
+
+      .lifeline {
+        stroke: rgba(255, 255, 255, 0.08);
+      }
     </style>
   </head>
   <body>
@@ -319,84 +530,274 @@
         </p>
       </header>
 
-      <div class="cards-grid">
-        <!-- Main Thread Card -->
-        <div class="card" id="card-main">
-          <div class="card-header">
-            <div class="card-title">Main Thread</div>
-            <span class="badge badge-idle" id="badge-main"><span class="badge-dot"></span>Idle</span>
+      <!-- Tabs Navigation -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" id="btn-explorer">Interception Explorer</button>
+        <button class="tab-btn" id="btn-scheme">Architecture Scheme</button>
+      </div>
+
+      <!-- Tab Content 1: Interception Explorer -->
+      <div class="tab-content active" id="tab-explorer">
+        <div class="cards-grid">
+          <!-- Main Thread Card -->
+          <div class="card" id="card-main">
+            <div class="card-header">
+              <div class="card-title">Main Thread</div>
+              <span class="badge badge-idle" id="badge-main"><span class="badge-dot"></span>Idle</span>
+            </div>
+            <div class="card-desc">
+              Executes a standard fetch directly on the window context. Playwright's router intercepts these requests seamlessly.
+            </div>
+            <button class="btn" id="mainFetch">Main fetch</button>
+            <div>
+              <div class="inline-result-title">Response</div>
+              <div class="inline-result-panel" id="res-main">Awaiting trigger...</div>
+            </div>
           </div>
-          <div class="card-desc">
-            Executes a standard fetch directly on the window context. Playwright's router intercepts these requests seamlessly.
+
+          <!-- WebWorker Card -->
+          <div class="card" id="card-worker">
+            <div class="card-header">
+              <div class="card-title">Web Worker</div>
+              <span class="badge badge-idle" id="badge-worker"><span class="badge-dot"></span>Idle</span>
+            </div>
+            <div class="card-desc">
+              Performs a fetch request from a background Dedicated Web Worker context. Modern Playwright intercepts worker fetches as well.
+            </div>
+            <button class="btn" id="workerFetch">WebWorker fetch</button>
+            <div>
+              <div class="inline-result-title">Response</div>
+              <div class="inline-result-panel" id="res-worker">Awaiting trigger...</div>
+            </div>
           </div>
-          <button class="btn" id="mainFetch">Main fetch</button>
-          <div>
-            <div class="inline-result-title">Response</div>
-            <div class="inline-result-panel" id="res-main">Awaiting trigger...</div>
+
+          <!-- SharedWorker Card -->
+          <div class="card" id="card-shared">
+            <div class="card-header">
+              <div class="card-title">Native Shared Worker</div>
+              <span class="badge badge-idle" id="badge-shared"><span class="badge-dot"></span>Idle</span>
+            </div>
+            <div class="card-desc">
+              Fetches from a Shared Worker intercepted via CDP. Due to Chromium security, this runs in an opaque origin and blocks real cross-origin fetches.
+            </div>
+            <button class="btn" id="sharedWorkerFetch">Native SharedWorker fetch</button>
+            <div>
+              <div class="inline-result-title">Response</div>
+              <div class="inline-result-panel" id="res-shared">Awaiting trigger...</div>
+            </div>
+          </div>
+
+          <!-- Blob Proxy Worker Card -->
+          <div class="card" id="card-blobworker" style="border-left: 4px solid #10b981;">
+            <div class="card-header">
+              <div class="card-title">Blob Proxy SharedWorker</div>
+              <span class="badge badge-idle" id="badge-blobworker"><span class="badge-dot"></span>Idle</span>
+            </div>
+            <div class="card-desc">
+              Bypasses Chrome's Opaque Origin by injecting the patched worker as a Blob URL dynamically, inheriting full trusted origin permissions!
+            </div>
+            <button class="btn" id="blobWorkerFetch" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Blob Proxy fetch</button>
+            <div>
+              <div class="inline-result-title">Response</div>
+              <div class="inline-result-panel" id="res-blobworker">Awaiting trigger...</div>
+            </div>
           </div>
         </div>
 
-        <!-- WebWorker Card -->
-        <div class="card" id="card-worker">
-          <div class="card-header">
-            <div class="card-title">Web Worker</div>
-            <span class="badge badge-idle" id="badge-worker"><span class="badge-dot"></span>Idle</span>
+        <!-- Real-time Terminal Log Console -->
+        <div class="terminal-container">
+          <div class="terminal-title">
+            <span>System Console Output</span>
+            <button class="clear-btn" onclick="clearLogs()">Clear Console</button>
           </div>
-          <div class="card-desc">
-            Performs a fetch request from a background Dedicated Web Worker context. Modern Playwright intercepts worker fetches as well.
-          </div>
-          <button class="btn" id="workerFetch">WebWorker fetch</button>
-          <div>
-            <div class="inline-result-title">Response</div>
-            <div class="inline-result-panel" id="res-worker">Awaiting trigger...</div>
-          </div>
-        </div>
-
-        <!-- SharedWorker Card -->
-        <div class="card" id="card-shared">
-          <div class="card-header">
-            <div class="card-title">Native Shared Worker</div>
-            <span class="badge badge-idle" id="badge-shared"><span class="badge-dot"></span>Idle</span>
-          </div>
-          <div class="card-desc">
-            Fetches from a Shared Worker intercepted via CDP. Due to Chromium security, this runs in an opaque origin and blocks real cross-origin fetches.
-          </div>
-          <button class="btn" id="sharedWorkerFetch">Native SharedWorker fetch</button>
-          <div>
-            <div class="inline-result-title">Response</div>
-            <div class="inline-result-panel" id="res-shared">Awaiting trigger...</div>
-          </div>
-        </div>
-
-        <!-- Blob Proxy Worker Card -->
-        <div class="card" id="card-blobworker" style="border-left: 4px solid #10b981;">
-          <div class="card-header">
-            <div class="card-title">Blob Proxy SharedWorker</div>
-            <span class="badge badge-idle" id="badge-blobworker"><span class="badge-dot"></span>Idle</span>
-          </div>
-          <div class="card-desc">
-            Bypasses Chrome's Opaque Origin by injecting the patched worker as a Blob URL dynamically, inheriting full trusted origin permissions!
-          </div>
-          <button class="btn" id="blobWorkerFetch" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Blob Proxy fetch</button>
-          <div>
-            <div class="inline-result-title">Response</div>
-            <div class="inline-result-panel" id="res-blobworker">Awaiting trigger...</div>
-          </div>
+          <pre class="terminal" id="out"></pre>
         </div>
       </div>
 
-      <!-- Real-time Terminal Log Console -->
-      <div class="terminal-container">
-        <div class="terminal-title">
-          <span>System Console Output</span>
-          <button class="clear-btn" onclick="clearLogs()">Clear Console</button>
+      <!-- Tab Content 2: Architecture Scheme -->
+      <div class="tab-content" id="tab-scheme">
+        <div class="scheme-container">
+          <div class="steps-list">
+            <div class="steps-header">Blob Proxy Interception Flow</div>
+            
+            <div class="step-card" data-step="1">
+              <div class="step-num">1</div>
+              <div class="step-content">
+                <h3>Trigger Worker fetch()</h3>
+                <p>The page initiates a standard network <code>fetch('/shared-worker.js')</code> to load the worker script.</p>
+              </div>
+            </div>
+
+            <div class="step-card" data-step="2">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <h3>Route Intercepted</h3>
+                <p>Playwright intercepts the fetch request mid-flight via <code>context.route()</code>.</p>
+              </div>
+            </div>
+
+            <div class="step-card" data-step="3">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <h3>Get Original Script</h3>
+                <p>Playwright fetches the original unpatched script from the development web server.</p>
+              </div>
+            </div>
+
+            <div class="step-card" data-step="4">
+              <div class="step-num">4</div>
+              <div class="step-content">
+                <h3>Inject Monkey Patch</h3>
+                <p>Playwright prepends the custom <code>self.fetch</code> routing patch and fulfills the request with the modified body.</p>
+              </div>
+            </div>
+
+            <div class="step-card" data-step="5">
+              <div class="step-num">5</div>
+              <div class="step-content">
+                <h3>Instantiate Trusted Blob</h3>
+                <p>The page receives the patched script string, wraps it into a local <code>Blob</code>, and boots the worker via the <code>blob:</code> URL.</p>
+              </div>
+            </div>
+
+            <div class="step-card" data-step="6">
+              <div class="step-num">6</div>
+              <div class="step-content">
+                <h3>Bypass Chrome Sandbox</h3>
+                <p>Since the blob URL shares the page's host, Chrome allows real API calls, while the patch mocks targeted endpoints internally.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="visual-flow">
+            <svg class="svg-diagram" viewBox="0 0 600 450">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="rgba(255, 255, 255, 0.3)" />
+                </marker>
+                <marker id="arrow-highlight" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6366f1" />
+                </marker>
+                <marker id="arrow-success" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+                </marker>
+              </defs>
+
+              <!-- Lifelines -->
+              <line class="lifeline" x1="75" y1="50" x2="75" y2="420" stroke-width="2" stroke-dasharray="4" />
+              <line class="lifeline" x1="225" y1="50" x2="225" y2="420" stroke-width="2" stroke-dasharray="4" />
+              <line class="lifeline" x1="375" y1="50" x2="375" y2="420" stroke-width="2" stroke-dasharray="4" />
+              <line class="lifeline" x1="525" y1="50" x2="525" y2="420" stroke-width="2" stroke-dasharray="4" />
+
+              <!-- Node Boxes -->
+              <g id="svg-node-page">
+                <rect x="25" y="10" width="100" height="40" rx="8" fill="#1e2032" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.5" />
+                <text x="75" y="34" font-family="'Outfit', sans-serif" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">window (Page)</text>
+              </g>
+              <g id="svg-node-router">
+                <rect x="175" y="10" width="100" height="40" rx="8" fill="#1e2032" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.5" />
+                <text x="225" y="34" font-family="'Outfit', sans-serif" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">context.route()</text>
+              </g>
+              <g id="svg-node-server">
+                <rect x="325" y="10" width="100" height="40" rx="8" fill="#1e2032" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.5" />
+                <text x="375" y="34" font-family="'Outfit', sans-serif" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">localhost:8080</text>
+              </g>
+              <g id="svg-node-worker">
+                <rect x="475" y="10" width="100" height="40" rx="8" fill="#1e2032" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.5" />
+                <text x="525" y="34" font-family="'Outfit', sans-serif" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">new SharedWorker</text>
+              </g>
+
+              <!-- Sequence Steps -->
+              <g class="svg-step" data-step="1">
+                <line x1="75" y1="90" x2="225" y2="90" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2" marker-end="url(#arrow)" class="step-line" />
+                <text x="150" y="80" font-family="'JetBrains Mono', monospace" font-size="9" fill="#9ca3af" text-anchor="middle" class="step-text">fetch('shared-worker.js')</text>
+                <circle cx="75" cy="90" r="4" fill="#a5b4fc" class="step-dot" />
+              </g>
+              <g class="svg-step" data-step="2">
+                <line x1="225" y1="150" x2="375" y2="150" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2" marker-end="url(#arrow)" class="step-line" />
+                <text x="300" y="140" font-family="'JetBrains Mono', monospace" font-size="9" fill="#9ca3af" text-anchor="middle" class="step-text">route.fetch()</text>
+                <circle cx="225" cy="150" r="4" fill="#a5b4fc" class="step-dot" />
+              </g>
+              <g class="svg-step" data-step="3">
+                <line x1="375" y1="210" x2="225" y2="210" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2" marker-end="url(#arrow)" class="step-line" />
+                <text x="300" y="200" font-family="'JetBrains Mono', monospace" font-size="9" fill="#9ca3af" text-anchor="middle" class="step-text">return raw script</text>
+                <circle cx="375" cy="210" r="4" fill="#a5b4fc" class="step-dot" />
+              </g>
+              <g class="svg-step" data-step="4">
+                <line x1="225" y1="270" x2="75" y2="270" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2" marker-end="url(#arrow)" class="step-line" />
+                <text x="150" y="260" font-family="'JetBrains Mono', monospace" font-size="9" fill="#9ca3af" text-anchor="middle" class="step-text">route.fulfill(patched)</text>
+                <circle cx="225" cy="270" r="4" fill="#a5b4fc" class="step-dot" />
+              </g>
+              <g class="svg-step" data-step="5">
+                <line x1="75" y1="330" x2="525" y2="330" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2" stroke-dasharray="3" marker-end="url(#arrow)" class="step-line" />
+                <text x="300" y="320" font-family="'JetBrains Mono', monospace" font-size="9" fill="#9ca3af" text-anchor="middle" class="step-text">new SharedWorker(blobUrl)</text>
+                <circle cx="75" cy="330" r="4" fill="#a5b4fc" class="step-dot" />
+              </g>
+              <g class="svg-step" data-step="6">
+                <path d="M 525 380 Q 565 395 525 410" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2" marker-end="url(#arrow)" class="step-line" />
+                <text x="570" y="400" font-family="'JetBrains Mono', monospace" font-size="9" fill="#9ca3af" text-anchor="start" class="step-text">self.fetch() patch (mocks snapshot)</text>
+                <circle cx="525" cy="380" r="4" fill="#a5b4fc" class="step-dot" />
+              </g>
+            </svg>
+          </div>
         </div>
-        <pre class="terminal" id="out"></pre>
       </div>
     </div>
 
     <script>
       const out = document.getElementById('out');
+
+      // Tab Switching Logic
+      const btnExplorer = document.getElementById('btn-explorer');
+      const btnScheme = document.getElementById('btn-scheme');
+      const tabExplorer = document.getElementById('tab-explorer');
+      const tabScheme = document.getElementById('tab-scheme');
+
+      function switchTab(tabId) {
+        if (tabId === 'explorer') {
+          btnExplorer.classList.add('active');
+          btnScheme.classList.remove('active');
+          tabExplorer.classList.add('active');
+          tabScheme.classList.remove('active');
+        } else {
+          btnExplorer.classList.remove('active');
+          btnScheme.classList.add('active');
+          tabExplorer.classList.remove('active');
+          tabScheme.classList.add('active');
+        }
+      }
+
+      btnExplorer.onclick = () => switchTab('explorer');
+      btnScheme.onclick = () => switchTab('scheme');
+
+      // Interactive Steps Highlighting Logic
+      const stepCards = document.querySelectorAll('.step-card');
+      const svgSteps = document.querySelectorAll('.svg-step');
+
+      function highlightStep(stepNum) {
+        stepCards.forEach(card => card.classList.remove('active'));
+        svgSteps.forEach(step => step.classList.remove('active'));
+
+        if (stepNum) {
+          const targetCard = document.querySelector(`.step-card[data-step="${stepNum}"]`);
+          if (targetCard) targetCard.classList.add('active');
+
+          const targetSvg = document.querySelector(`.svg-step[data-step="${stepNum}"]`);
+          if (targetSvg) targetSvg.classList.add('active');
+        }
+      }
+
+      stepCards.forEach(card => {
+        const stepNum = card.getAttribute('data-step');
+        card.onmouseenter = () => highlightStep(stepNum);
+        card.onmouseleave = () => highlightStep(null);
+      });
+
+      svgSteps.forEach(step => {
+        const stepNum = step.getAttribute('data-step');
+        step.onmouseenter = () => highlightStep(stepNum);
+        step.onmouseleave = () => highlightStep(null);
+      });
 
       function log(msg) {
         const time = new Date().toLocaleTimeString();
